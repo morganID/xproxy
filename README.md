@@ -31,15 +31,23 @@ and a `serve` that runs the gateway in the foreground.
 ## Install
 
 ```sh
+curl -fsSL https://raw.githubusercontent.com/morganID/xproxy/main/scripts/install.sh | sh
+xproxy status
+```
+
+The script downloads the latest release for this architecture and puts the
+binary in the first writable directory on the `PATH` — Homebrew's bin on Apple
+Silicon, then `/usr/local/bin`, then `~/.local/bin`.
+
+### From source
+
+```sh
 git clone https://github.com/morganID/xproxy
 cd xproxy
 ./scripts/fetch-core.sh      # clones the engine at the pinned commit
 cargo build --release -p xproxy
 ./target/release/xproxy status
 ```
-
-`cargo install --path crates/xproxy` works too, and puts `xproxy` on
-your `PATH`.
 
 The engine is not vendored and not forked: `gproxy-ref/` is the upstream
 repository at a commit pinned in `scripts/fetch-core.sh`, referenced by path.
@@ -179,6 +187,15 @@ The six that emulate a browser's TLS fingerprint — `claudecode`, `claudeweb`,
 fetches that submodule's entire history. To enable them, add the names to the
 `gproxy` features in `Cargo.toml`, restore the `btls-sys` patch line documented
 there, and run `scripts/fetch-boringssl.sh` before the first build.
+
+## Releases
+
+```sh
+./scripts/release.sh           # builds, packs xproxy-macos-<arch>.tar.gz, publishes
+```
+
+The asset is what `scripts/install.sh` downloads, so a release is the only way
+a binary gets into somebody's `PATH`.
 
 ## Keeping up with upstream
 
