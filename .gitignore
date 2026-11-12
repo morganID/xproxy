@@ -1,0 +1,16 @@
+/target
+.DS_Store
+*.log
+
+# The engine checkout, fetched by scripts/fetch-core.sh at a pinned commit.
+/gproxy-ref
+
+# A local cargo home used when the shared one is contended; never committed.
+/.cargo-home
+
+# Working notes.
+/.workbuddy-ai
+
+# Signing identities and notarisation credentials never belong in here.
+*.p12
+*.provisionprofile

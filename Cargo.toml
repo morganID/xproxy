@@ -1,0 +1,109 @@
+[workspace]
+resolver = "3"
+members = ["crates/xproxy"]
+# The upstream checkout is a workspace of its own. It is referenced by path so
+# the engine is the exact commit that was cloned, not a copy that can drift.
+exclude = ["gproxy-ref"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "AGPL-3.0-or-later"
+repository = "https://github.com/morganID/xproxy"
+
+[workspace.dependencies]
+# ------------------------------------------------------------------ shell --
+clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+# One POST, for `xproxy test`: the point is to exercise the data plane the way
+# a client does, not to call the engine from the inside.
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# ----------------------------------------------------------------- engine --
+# The GPROXY core, taken as it is. `gproxy` is the operator's half of the
+# product, `gproxy-app` the identity and admission layer, `gproxy-sdk` the
+# engine handle, and `gproxy-host-tauri` the assembly that turns them into a
+# running local instance. xproxy adds a menu bar in front of that assembly and
+# nothing below it.
+gproxy = { path = "gproxy-ref/crates/gproxy", default-features = false, features = [
+    "memory",
+    "fs",
+    "bundled-vocabulary",
+    # Every channel that speaks to an upstream over ordinary TLS.
+    "aistudio",
+    "aws_bedrock",
+    "azure",
+    "claudeapi",
+    "cline",
+    "cloudflare_ai_gateway",
+    "codex",
+    "custom",
+    "dashscope",
+    "deepseek",
+    "devin",
+    "glm",
+    "grokbuild",
+    "kimi",
+    "minimax",
+    "nvidia",
+    "openai",
+    "opencode",
+    "opendesign",
+    "orcaterm",
+    "openrouter",
+    "trae",
+    "vercel",
+    "volcengine",
+    "vertex",
+    "vertexexpress",
+    "workbuddy",
+    "xai",
+] }
+gproxy-app = { path = "gproxy-ref/crates/gproxy-app" }
+gproxy-core = { path = "gproxy-ref/crates/gproxy-core" }
+# Only for one enum: which login flows a channel offers, which decides what the
+# menu can put in front of a person.
+gproxy-channel = { path = "gproxy-ref/crates/gproxy-channel" }
+gproxy-sdk = { path = "gproxy-ref/crates/gproxy-sdk" }
+gproxy-host-tauri = { path = "gproxy-ref/crates/gproxy-host-tauri", default-features = false, features = [
+    "memory",
+    "fs",
+    "bundled-vocabulary",
+] }
+
+# `[patch]` is workspace-local, and this is the one thing about reusing the
+# engine that is not just a path.
+#
+# Upstream patches three crates: its SQLx fork (which adds
+# `SqliteConnection::execute_batch`, the whole point of its SQLite batch
+# writer), the BoringSSL bindings behind the browser-fingerprint channels, and
+# a glib backport. A dependency's patch section does not reach the workspace
+# that depends on it, so without these lines the engine compiles against
+# crates.io's SQLx and fails with "no method named `execute_batch`". They are
+# copied from `gproxy-ref/Cargo.toml` and must be kept in step with the pin in
+# `scripts/fetch-core.sh`.
+[patch.crates-io]
+glib = { path = "gproxy-ref/vendor/glib" }
+sqlx = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+sqlx-core = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+sqlx-macros = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+sqlx-macros-core = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+sqlx-mysql = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+sqlx-postgres = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+sqlx-sqlite = { git = "https://github.com/LeenHawk/sqlx", rev = "278e61a175c7e52dbfcedd94d332922f58ccf4e9" }
+
+# Not patched, and not enabled: the six channels that emulate a browser's TLS
+# fingerprint (`antigravity`, `claudecode`, `claudeweb`, `copilotcli`,
+# `geminicli`, `kiro`) pull `btls-sys`, whose build script and git dependency
+# carry BoringSSL as a submodule — a clone of its entire history. To turn them
+# on, add `"channels"` (or the six names) to the `gproxy` features above and
+# this line back:
+#
+#   btls-sys = { git = "https://github.com/0x676e67/btls", rev = "609f955e6de4df4a215ee9b273d327af1c0771db" }
+#
+# then run `scripts/fetch-boringssl.sh` before the first build.

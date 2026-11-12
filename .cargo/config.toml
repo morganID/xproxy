@@ -1,0 +1,18 @@
+# Fetching with the system `git` rather than cargo's own transport: the git
+# dependencies here (a SQLx fork, BoringSSL's parent) are large, and the CLI
+# shows progress and resumes where a stuck libgit2 fetch does not.
+[net]
+git-fetch-with-cli = true
+
+[build]
+# One target directory for the whole workspace, so a `cargo run` after a
+# `cargo check` reuses what it built.
+incremental = true
+
+[http]
+# This link drops to a few bytes a second under load. Cargo's default
+# low-speed cutoff aborts a download that is merely slow; a longer timeout and
+# a near-zero floor let a slow transfer finish instead of restarting it.
+timeout = 300
+low-speed-limit = 1
+multiplexing = false

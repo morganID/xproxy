@@ -1,0 +1,38 @@
+[package]
+name = "xproxy"
+description = "A local GPROXY gateway, managed from the command line"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository = "https://github.com/morganID/xproxy"
+documentation = "https://docs.rs/xproxy"
+readme = "../../README.md"
+keywords = ["llm", "proxy", "gateway", "anthropic", "openai"]
+categories = ["command-line-utilities", "development-tools"]
+
+[lib]
+name = "xproxy"
+path = "src/lib.rs"
+
+[[bin]]
+name = "xproxy"
+path = "src/main.rs"
+
+[dependencies]
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tokio = { workspace = true, features = ["macros", "signal"] }
+tracing.workspace = true
+tracing-subscriber.workspace = true
+tracing-appender.workspace = true
+reqwest.workspace = true
+
+# The engine, by path. Nothing here is forked: these are the upstream crates at
+# the commit `scripts/fetch-core.sh` pins.
+gproxy.workspace = true
+gproxy-app.workspace = true
+gproxy-core.workspace = true
+gproxy-channel.workspace = true
+gproxy-sdk.workspace = true
+gproxy-host-tauri.workspace = true
